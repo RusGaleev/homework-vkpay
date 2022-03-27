@@ -1,40 +1,47 @@
-var commissionAmount = 0 //сумма комиссии
 const val minCommissionMir = 35_00
 fun main() {
-    var transferAmount = 66793_00 //сумма перевода в копейках
-    var previousTransferAmount = 8987300 //сумма предыдущего перевода в копейках
+    var transferAmount = 14793_00 //сумма перевода в копейках
+    var previousTransferAmount = 8987_00 //сумма предыдущего перевода в копейках
     var cardName = "VK Pay"
-    printOut(cardName, previousTransferAmount, transferAmount)
-    printOut("Mir", previousTransferAmount, 35000_00)
-    printOut("MasterCard", 40000_00, 50000_00)
+    var commissionAmount = doTransfer(cardName, previousTransferAmount, transferAmount)
+    printOut(cardName, transferAmount, commissionAmount)
+    cardName = "Mir"
+    transferAmount = 35000_00
+    commissionAmount = doTransfer(cardName, previousTransferAmount, transferAmount)
+    printOut(cardName, transferAmount, commissionAmount)
+    cardName = "MasterCard"
+    transferAmount = 45000_00
+    previousTransferAmount = 50000_00
+    commissionAmount = doTransfer(cardName, previousTransferAmount, transferAmount)
+    printOut(cardName, transferAmount, commissionAmount)
 }
 
-fun doTransfer(card: String = "VK Pay", previousTransferAmount: Int = 0, transferAmount: Int): Boolean {
-    if (card == "VK Pay" && previousTransferAmount + transferAmount > 40_000_00) return false
-    if (card == "VK Pay" && transferAmount > 15_000_00) return false
-    if (transferAmount > 150_000_00) return false
-    if (previousTransferAmount + transferAmount > 600_000_00) return false
-    when (card) {
-        "VK Pay" -> commissionAmount = 0
+fun doTransfer(card: String = "VK Pay", previousTransferAmount: Int = 0, transferAmount: Int): Int {
+    if (transferAmount > 150_000_00) throw Exception("Transfer over limits.")
+    if (previousTransferAmount + transferAmount > 600_000_00) throw Exception("Transfer over limits.")
+    return when (card) {
+        "VK Pay" -> {
+            if (previousTransferAmount + transferAmount > 40_000_00) throw Exception("Transfer over limits.")
+            if (transferAmount > 15_000_00) throw Exception("Transfer over limits.")
+            0
+        }
         "Mir", "Visa" -> {
-            commissionAmount = if (transferAmount * 0.75 / 100 <= minCommissionMir) {
+            if (transferAmount * 0.75 / 100 <= minCommissionMir) {
                 minCommissionMir
             } else {
                 (transferAmount * 0.75 / 100).toInt()
             }
         }
         "MasterCard", "Maestro" -> {
-            commissionAmount = when (transferAmount) {
+            when (transferAmount) {
                 in 300_00..75_000_00 -> 0
                 else -> (transferAmount * 0.6 / 100 + 20).toInt()
             }
-
         }
+        else -> throw Exception("Transfer unknown.")
     }
-    return true
 }
 
-private fun printOut(card: String, previousTransferAmount: Int, transferAmount: Int) {
-    if (!doTransfer(card, previousTransferAmount, transferAmount)) println("Перевод отклонен")
-    println("Карта: $card. Сумма перевода: ${transferAmount/100} рублей ${transferAmount%100} копеек. Комиссия составит ${commissionAmount/100} рублей ${commissionAmount%100} копеек")
+private fun printOut(card: String, transferAmount: Int, commissionAmount: Int) {
+    println("Карта: $card. Сумма перевода: ${transferAmount / 100} рублей ${transferAmount % 100} копеек. Комиссия составит ${commissionAmount / 100} рублей ${commissionAmount % 100} копеек")
 }
